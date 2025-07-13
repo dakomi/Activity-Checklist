@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pleasant Activity Checklist</title>
+    <meta name="theme-color" content="#4CAF50">
+    <link rel="manifest" href="manifest.json">
+    <style>
+        /* ============================================= */
+        /* GLOBAL STYLES */
+        /* ============================================= */
+        body {
+        	font-family: Arial, sans-serif;
+        	padding: 20px;
+        	}
+        .section {
+        	margin: 20px 0;
+        	padding: 15px;
+        	border: 1px solid #ddd;
+        	border-radius: 5px;
+        	}
+        h2, h3 { margin: 1em 0; } 
+        button {
+        	margin-left: 10px;
+        	padding: 3px 8px;
+        	}
+        input[type="text"] {
+        	padding: 5px;
+        	width: 200px;
+        	}
+        textarea {
+        	width: 100%;
+        	height: 100px;
+        	margin: 10px 0;
+        	}
+
+        /* ============================================= */
+        /* WEB APP CONTENT */
+        /* ============================================= */
+        /* Current Week Checklist */
+        .activity { display: flex; align-items: center; margin: 10px 0; padding: 8px; }
+        
+        /* Activities List */
+        /* (Uses global styles) */
+        
+        /* History Section */
+        .history-controls {
+            margin-bottom: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+        }
+        .history-entry {
+            margin: 15px 0;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 5px;
+            border-left: 4px solid #4CAF50;
+        }
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            cursor: pointer;
+            align-items: center;
+        }
+        .history-actions {
+            display: flex;
+            gap: 5px;
+        }
+        .history-content {
+            margin-top: 10px;
+        }
+        .history-note {
+            margin: 10px 0;
+            padding: 8px;
+            background: white;
+            border-radius: 3px;
+        }
+        .note-edit {
+            width: 100%;
+            min-height: 60px;
+            margin: 5px 0;
+        }
+        /* Maybe apply this highlight to completed
+        activities in the current week too */
+        .activity-status {
+            margin: 3px 0;
+            padding: 3px;
+        }
+        .completed {
+            background-color: #e8f5e9;
+        }
+        .not-completed {
+            background-color: #ffebee;
+        }
+        .date-format-example {
+            font-size: 0.8em;
+            color: #666;
+            margin-left: 5px;
+        }
+        
+        /* Data Management */
+        .data-export {
+        	margin-top: 30px;
+        	padding: 20px;
+        	background: #f0f0f0;
+        	}
+        .data-section { margin: 10px 0; }
+        
+        /* Collapsible Sections */
+        .collapsible { display: none; }
+        .collapsible.visible { display: block; }
+         .toggle-header {
+        	cursor: pointer;
+        	user-select: none;
+        	}
+        /* Toggle header arrows */	
+		.app-toggle-header::before {
+		    content: '► ';
+		    font-size: 0.8em;
+		}
+		.app-toggle-header.visible::before {
+		    content: '▼ ';
+		}
+
+        /* ============================================= */
+        /* SETTINGS MENU */
+        /* ============================================= */
+        /* Settings Menu Container */
+        #settingsMenu {
+            position: fixed;
+            top: 0;
+            left: -300px;
+            width: 250px;
+            height: 100%;
+            background: white;
+            padding: 20px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.2);
+            transition: left 0.3s;
+            z-index: 100;
+            overflow-y: auto;
+        }
+        #settingsToggle {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            cursor: pointer;
+            z-index: 101;
+            font-size: 24px;
+        }
+        
+        /* Settings Groups */
+        .settings-group { margin: 15px 0; }
+        #settingsMenu h2, #settingsMenu h3 {
+            margin-top: 1em;
+            margin-bottom: 0.3em;
+        }
+
+        /* Collapsible Settings Menu Sections */
+		.settings-group-content { display: block; }
+		.settings-group-content.collapsed { display: none; }
+		#settingsMenu .toggle-header::before {
+		    content: '► ';
+		    font-size: 0.8em;
+		}
+		#settingsMenu .toggle-header.collapsed::before {
+		    content: '► ';
+		}
+		#settingsMenu .toggle-header:not(.collapsed)::before {
+		    content: '▼ ';
+		}
+        
+        /* Master List Editor */
+        #masterListEditor { 
+            width: 100%;
+            height: 200px;
+            margin: 10px 0;
+            font-family: monospace;
+        }
+        .editor-actions {
+        	display: flex;
+        	gap: 10px;
+        	margin: 10px 0;
+        	}
+        .editor-help {
+        	font-size: 0.9em;
+        	color: #666;
+        	margin-top: 5px;
+        	}
+        
+        /* Notification Settings */
+        .notification-textarea {
+        	width: 100%;
+        	min-height: 60px;
+        	margin: 5px 0;
+        	}
+
+        /* ============================================= */
+        /* PWA SPECIFIC STYLES */
+        /* ============================================= */
+        /* Install Button */
+        #installButton {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            z-index: 100;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- ============================================= -->
+    <!-- PWA INSTALL BUTTON -->
+    <!-- ============================================= -->
+    <button id="installButton" style="display: none;">Install App</button>
+    
+    <!-- ============================================= -->
+    <!-- SETTINGS MENU TOGGLE -->
+    <!-- ============================================= -->
+    <div id="settingsToggle" onclick="toggleSettings()">☰</div>
+    
+    <!-- ============================================= -->
+    <!-- SETTINGS MENU CONTENT -->
+    <!-- ============================================= -->
+    <div id="settingsMenu">
+        <h2>Settings</h2>
+        
+        <!-- Reset Time Settings -->
+		<div class="settings-group">
+		    <h3 class="toggle-header" onclick="toggleSettingsGroup('resetTime')">Reset Time</h3>
+		    <div id="group-resetTime" class="settings-group-content">
+            <div style="margin-bottom:0.5em;">
+            <label>New week starts at:
+                <select id="resetHour">
+                    <option value="0">12:00 AM (midnight)</option>
+                    <option value="1">1:00 AM</option>
+                    <option value="2">2:00 AM</option>
+                    <option value="3">3:00 AM</option>
+                    <option value="4">4:00 AM</option>
+                    <option value="5">5:00 AM</option>
+                    <option value="6">6:00 AM</option>
+                    <option value="7">7:00 AM</option>
+                    <option value="8">8:00 AM</option>
+                    <option value="9">9:00 AM</option>
+                    <option value="10">10:00 AM</option>
+                    <option value="11">11:00 AM</option>
+                    <option value="12">12:00 PM (noon)</option>
+                    <option value="13">1:00 PM</option>
+                    <option value="14">2:00 PM</option>
+                    <option value="15">3:00 PM</option>
+                    <option value="16">4:00 PM</option>
+                    <option value="17">5:00 PM</option>
+                    <option value="18">6:00 PM</option>
+                    <option value="19">7:00 PM</option>
+                    <option value="20">8:00 PM</option>
+                    <option value="21">9:00 PM</option>
+                    <option value="22">10:00 PM</option>
+                    <option value="23">11:00 PM</option>
+                </select>
+            </label></div>
+            <button onclick="saveSettings()">Save Settings</button>
+            </div>
+        </div>
+
+        <!-- Activity List Editor -->
+		<div class="settings-group">
+		    <h3 class="toggle-header" onclick="toggleSettingsGroup('activityEditor')">Activity List Editor</h3>
+		    <div id="group-activityEditor" class="settings-group-content">
+            <textarea id="masterListEditor" placeholder="Bulk add, remove, rename or edit activities in plain text. 
+One activity per line. 
+Reorder by changing line positions. 
+Press 'Cancel' to load all activities into the textbox, and to reset unsaved changes."></textarea>
+            <div class="editor-actions">
+                <button onclick="saveMasterList()">Save Changes</button>
+                <button onclick="cancelMasterListEdit()">Cancel</button>
+            </div>
+            </div>
+        </div>
+
+        <!-- History Display Settings -->
+        <div class="settings-group">
+		    <h3 class="toggle-header" onclick="toggleSettingsGroup('historySettings')">History Display Settings</h3>
+		    <div id="group-historySettings" class="settings-group-content">
+            <label>
+                <input type="checkbox" id="showNotesToggle"> Show Notes
+            </label><br>
+            <label>
+                Sort Order:
+                <select id="historySortOrder">
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                </select>
+            </label><br>
+            <label>
+                Date Format:
+                <select id="dateFormat">
+                    <option value="dd mmm, yyyy">dd mmm, yyyy <span class="date-format-example">(05 Apr, 2023)</span></option>
+                    <option value="mm/dd/yyyy">mm/dd/yyyy <span class="date-format-example">(04/05/2023)</span></option>
+                    <option value="dd/mm/yyyy">dd/mm/yyyy <span class="date-format-example">(05/04/2023)</span></option>
+                    <option value="mmm dd, yyyy">mmm dd, yyyy <span class="date-format-example">(Apr 05, 2023)</span></option>
+                </select>
+            </label><br>
+            <div style="margin-bottom:0.5em;">
+            <label>
+                <input type="checkbox" id="useHyphenSeparator"> Use hyphen separator
+            </label></div>
+            <button onclick="saveHistorySettings()">Save History Settings</button>
+            </div>
+        </div>
+        
+        <!-- Notification Settings -->
+        <div class="settings-group">
+		    <h3 class="toggle-header" onclick="toggleSettingsGroup('notifications')">Notifications</h3>
+		    <div id="group-notifications" class="settings-group-content">
+            <label>
+                <input type="checkbox" id="enableDailyNotifications"> Enable Daily Reminders
+            </label><br>
+            <label>
+                <input type="checkbox" id="enableWeeklyNotifications"> Enable Weekly Reset Notifications
+            </label><br>
+            <div id="notificationTimeContainer" style="margin-top: 10px;">
+                <label>Notification Time:
+                    <select id="notificationHour">
+                        <option value="0">12:00 AM (midnight)</option>
+                        <option value="1">1:00 AM</option>
+                        <option value="2">2:00 AM</option>
+                        <option value="3">3:00 AM</option>
+                        <option value="4">4:00 AM</option>
+                        <option value="5">5:00 AM</option>
+                        <option value="6">6:00 AM</option>
+                        <option value="7">7:00 AM</option>
+                        <option value="8">8:00 AM</option>
+                        <option value="9">9:00 AM</option>
+                        <option value="10">10:00 AM</option>
+                        <option value="11">11:00 AM</option>
+                        <option value="12">12:00 PM (noon)</option>
+                        <option value="13">1:00 PM</option>
+                        <option value="14">2:00 PM</option>
+                        <option value="15">3:00 PM</option>
+                        <option value="16">4:00 PM</option>
+                        <option value="17">5:00 PM</option>
+                        <option value="18">6:00 PM</option>
+                        <option value="19">7:00 PM</option>
+                        <option value="20">8:00 PM</option>
+                        <option value="21">9:00 PM</option>
+                        <option value="22">10:00 PM</option>
+                        <option value="23">11:00 PM</option>
+                    </select>
+                </label>
+            </div>
+            <div style="margin-top: 10px;">
+                <label>Daily Notification Text:</label>
+                <textarea class="notification-textarea" id="dailyNotificationText" placeholder="What nice things can you take the time to do today?"></textarea>
+            </div>
+            <div style="margin-top: 10px;">
+                <label>Weekly Reset Notification Text:</label>
+                <textarea class="notification-textarea" id="weeklyNotificationText" placeholder="A new week has started! Reflect on how taking the time to enjoy things has made you feel last week. What would you like to do this week?"></textarea>
+            </div>
+            <div style="margin-top: 10px;">
+                <label>When both notifications would occur on the same day:</label>
+                <select id="notificationPriority">
+                    <option value="both">Show both notifications</option>
+                    <option value="daily">Show only daily notification</option>
+                    <option value="weekly">Show only weekly notification</option>
+                </select>
+            </div>
+            <div style="margin-top: 10px;">
+                <button onclick="requestNotificationPermission()">Enable Notifications</button>
+                <button onclick="testNotifications()">Test Notifications</button>
+            </div>
+            <button onclick="saveNotificationSettings()" style="margin-top: 10px;">Save Notification Settings</button>
+        </div>
+        </div>
+    </div>
+
+
+    <!-- ============================================= -->
+    <!-- WEB APP CONTENT -->
+    <!-- ============================================= -->
+    <!-- Current Week Checklist -->   
+    <div class="section current-week">
+        <h2>Current Week's Checklist</h2>
+        <div id="currentWeek"></div>
+    </div>
+
+    <!-- Activities List -->
+    <div class="section masterlist">
+        <h2>My Pleasant Activities List</h2>
+        <div>
+            <input type="text" id="newActivity" placeholder="New activity">
+            <button onclick="addToMasterList()"><span style='font-weight:bold;'><span style='color:#15FF0D;'>+</span></span></button>
+        </div>
+        <div id="masterList"></div>
+    </div>
+
+    <!-- History Section -->
+	<div class="section history">
+	    <h2 class="app-toggle-header" onclick="toggleSection('history')">History</h2> <!-- Removed ▼ -->
+	    <div id="history" class="collapsible">
+	        <div id="historyEntries"></div>
+	    </div>
+	</div>
+
+    <!-- Data Management Section -->
+	<div class="section data-export">
+	    <h2 class="app-toggle-header" onclick="toggleSection('dataExport')">Data Management</h2> <!-- Removed ▼ -->
+	    <div id="dataExport" class="collapsible">
+            <div class="data-section">
+                <button onclick="exportData()">Export Data</button>
+                <textarea id="exportDataArea" placeholder="Exported data will appear here"></textarea>
+            </div>
+            <div class="data-section">
+                <button onclick="importData()">Import Data</button>
+                <textarea id="importDataArea" placeholder="Paste your data here"></textarea>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // =============================================
+        // APPLICATION STATE
+        // =============================================
+        let state = {
+            masterList: JSON.parse(localStorage.getItem('masterList')) || [],
+            currentWeek: JSON.parse(localStorage.getItem('currentWeek')) || {},
+            history: JSON.parse(localStorage.getItem('history')) || [],
+            lastReset: localStorage.getItem('lastReset') || getLocalTimeString(new Date()),
+            uiState: JSON.parse(localStorage.getItem('uiState')) || {
+                historyVisible: false,
+                dataExportVisible: false
+            },
+            // Collapsible settings state - uiState but for settings menu
+            settingsMenuState: JSON.parse(localStorage.getItem('settingsMenuState')) || {
+            	resetTime: false,
+            	activityEditor: false,
+            	historySettings: false,
+            	notifications: false
+    		},
+            settings: JSON.parse(localStorage.getItem('settings')) || {
+                resetHour: 0 // Default to midnight
+            },
+            editorState: JSON.parse(localStorage.getItem('editorState')) || {
+                masterListDraft: null
+            },
+            historySettings: JSON.parse(localStorage.getItem('historySettings')) || {
+                sortOrder: 'newest',
+                showNotes: true,
+                dateFormat: 'dd mmm, yyyy',
+                useHyphenSeparator: false,
+                collapsedEntries: {}
+            },
+            notificationSettings: JSON.parse(localStorage.getItem('notificationSettings')) || {
+                enableDaily: true,
+                enableWeekly: true,
+                notificationHour: 9, // 9 AM
+                dailyNotificationText: 'What nice things can you take the time to do today?',
+                weeklyNotificationText: 'A new week has started! Reflect on how taking the time to enjoy things has made you feel last week. What would you like to do this week?',
+                notificationPriority: 'both'
+            }
+        };
+
+        // Run migration for existing users
+        migrateDates();
+
+        // =============================================
+        // PWA INSTALLATION HANDLING
+        // =============================================
+        let deferredPrompt;
+        const installButton = document.getElementById('installButton');
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installButton.style.display = 'block';
+        });
+        
+        installButton.addEventListener('click', async () => {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log(`User response to the install prompt: ${outcome}`);
+            deferredPrompt = null;
+            installButton.style.display = 'none';
+        });
+        
+        window.addEventListener('appinstalled', () => {
+            installButton.style.display = 'none';
+            deferredPrompt = null;
+            console.log('PWA was installed');
+        });
+
+        // =============================================
+        // NOTIFICATION FUNCTIONS
+        // =============================================
+        function requestNotificationPermission() {
+            if (!('Notification' in window)) {
+                alert('This browser does not support notifications');
+                return;
+            }
+            
+            Notification.requestPermission().then(permission => {
+                if (permission === 'granted') {
+                    alert('Notification permission granted!');
+                    scheduleNotifications();
+                } else {
+                    alert('Notifications disabled. You can enable them in browser settings.');
+                }
+            });
+        }
+        
+        function scheduleNotifications() {
+            if (!state.notificationSettings.enableDaily && !state.notificationSettings.enableWeekly) {
+                return;
+            }
+            
+            if ('serviceWorker' in navigator && 'Notification' in window) {
+                navigator.serviceWorker.getRegistration().then(reg => {
+                    if (reg) {
+                        reg.getNotifications().then(notifications => {
+                            notifications.forEach(notification => notification.close());
+                        });
+                    }
+                });
+            }
+            
+            if (state.notificationSettings.enableDaily) {
+                scheduleDailyNotification();
+            }
+            
+            if (state.notificationSettings.enableWeekly) {
+                scheduleWeeklyNotification();
+            }
+        }
+        
+        function scheduleDailyNotification() {
+            if (!('serviceWorker' in navigator)) return;
+            
+            const now = new Date();
+            const notificationTime = new Date();
+            notificationTime.setHours(state.notificationSettings.notificationHour, 0, 0, 0);
+            
+            if (now > notificationTime) {
+                notificationTime.setDate(notificationTime.getDate() + 1);
+            }
+            
+            const timeUntilNotification = notificationTime.getTime() - now.getTime();
+            
+            setTimeout(() => {
+                showNotification(state.notificationSettings.dailyNotificationText || 'What nice things can you take the time to do today?');
+                scheduleDailyNotification();
+            }, timeUntilNotification);
+        }
+        
+        function scheduleWeeklyNotification() {
+            if (!('serviceWorker' in navigator)) return;
+            
+            const lastResetDate = dateFromLocalString(state.lastReset);
+            const now = new Date();
+            
+            const nextReset = new Date(lastResetDate);
+            nextReset.setDate(nextReset.getDate() + 7);
+            nextReset.setHours(state.settings.resetHour, 0, 0, 0);
+            
+            if (now > nextReset) {
+                nextReset.setDate(nextReset.getDate() + 7);
+            }
+            
+            const timeUntilNotification = nextReset.getTime() - now.getTime();
+            
+            setTimeout(() => {
+                const showWeekly = shouldShowWeeklyNotification();
+                if (showWeekly) {
+                    showNotification(state.notificationSettings.weeklyNotificationText || 'A new week has started! Reflect on how taking the time to enjoy things has made you feel last week. What would you like to do this week?');
+                }
+                scheduleWeeklyNotification();
+            }, timeUntilNotification);
+        }
+        
+        function shouldShowWeeklyNotification() {
+            if (!state.notificationSettings.enableDaily) return true;
+            
+            switch (state.notificationSettings.notificationPriority) {
+                case 'both': return true;
+                case 'daily': return false;
+                case 'weekly': return true;
+                default: return true;
+            }
+        }
+        
+        function shouldShowDailyNotification() {
+            if (!state.notificationSettings.enableWeekly) return true;
+            
+            const lastResetDate = dateFromLocalString(state.lastReset);
+            const now = new Date();
+            const nextReset = new Date(lastResetDate);
+            nextReset.setDate(nextReset.getDate() + 7);
+            nextReset.setHours(state.settings.resetHour, 0, 0, 0);
+            
+            if (now.getDate() === nextReset.getDate() && 
+                now.getMonth() === nextReset.getMonth() && 
+                now.getFullYear() === nextReset.getFullYear()) {
+                
+                switch (state.notificationSettings.notificationPriority) {
+                    case 'both': return true;
+                    case 'daily': return true;
+                    case 'weekly': return false;
+                    default: return true;
+                }
+            }
+            
+            return true;
+        }
+        
+        function showNotification(message) {
+            if (!('serviceWorker' in navigator) || !('Notification' in window)) return;
+            
+            if (Notification.permission === 'granted') {
+                navigator.serviceWorker.getRegistration().then(reg => {
+                    if (reg) {
+                        reg.showNotification('Weekly Checklist', {
+                            body: message,
+                            icon: 'icon-192.png',
+                            vibrate: [200, 100, 200]
+                        });
+                    }
+                });
+            }
+        }
+        
+        function testNotifications() {
+            if (Notification.permission !== 'granted') {
+                alert('Please enable notifications first');
+                return;
+            }
+            
+            if (state.notificationSettings.enableDaily) {
+                showNotification(state.notificationSettings.dailyNotificationText || 'Test daily notification');
+            }
+            
+            if (state.notificationSettings.enableWeekly) {
+                showNotification(state.notificationSettings.weeklyNotificationText || 'Test weekly notification');
+            }
+        }
+        
+        function saveNotificationSettings() {
+            state.notificationSettings = {
+                enableDaily: document.getElementById('enableDailyNotifications').checked,
+                enableWeekly: document.getElementById('enableWeeklyNotifications').checked,
+                notificationHour: parseInt(document.getElementById('notificationHour').value, 10),
+                dailyNotificationText: document.getElementById('dailyNotificationText').value.trim(),
+                weeklyNotificationText: document.getElementById('weeklyNotificationText').value.trim(),
+                notificationPriority: document.getElementById('notificationPriority').value
+            };
+            
+            localStorage.setItem('notificationSettings', JSON.stringify(state.notificationSettings));
+            
+            if (Notification.permission === 'granted') {
+                scheduleNotifications();
+            }
+            
+            alert('Notification settings saved!');
+        }
+        
+        function loadNotificationSettings() {
+            document.getElementById('enableDailyNotifications').checked = state.notificationSettings.enableDaily;
+            document.getElementById('enableWeeklyNotifications').checked = state.notificationSettings.enableWeekly;
+            document.getElementById('notificationHour').value = state.notificationSettings.notificationHour;
+            document.getElementById('dailyNotificationText').value = state.notificationSettings.dailyNotificationText || 'What nice things can you take the time to do today?';
+            document.getElementById('weeklyNotificationText').value = state.notificationSettings.weeklyNotificationText || 'A new week has started! Reflect on how taking the time to enjoy things has made you feel last week. What would you like to do this week?';
+            document.getElementById('notificationPriority').value = state.notificationSettings.notificationPriority || 'both';
+        }
+
+        // =============================================
+        // DATE HANDLING FUNCTIONS
+        // =============================================
+        function getLocalTimeString(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+            return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        }
+
+        function dateFromLocalString(dateString) {
+            const [datePart, timePart] = dateString.split(' ');
+            const [year, month, day] = datePart.split('-').map(Number);
+            const [hours, minutes, seconds] = timePart.split(':').map(Number);
+            return new Date(year, month - 1, day, hours, minutes, seconds);
+        }
+        
+        function formatDate(dateString) {
+            const dateObj = dateFromLocalString(dateString);
+            const day = dateObj.getDate().toString().padStart(2, '0');
+            const month = dateObj.toLocaleString('default', { month: 'short' });
+            const year = dateObj.getFullYear();
+            
+            switch(state.historySettings.dateFormat) {
+                case 'mm/dd/yyyy':
+                    return `${(dateObj.getMonth()+1).toString().padStart(2, '0')}/${day}/${year}`;
+                case 'dd/mm/yyyy':
+                    return `${day}/${(dateObj.getMonth()+1).toString().padStart(2, '0')}/${year}`;
+                case 'mmm dd, yyyy':
+                    return `${month} ${day}, ${year}`;
+                default: // 'dd mmm, yyyy'
+                    return `${day} ${month}, ${year}`;
+            }
+        }
+
+        // =============================================
+        // DATA MIGRATION FUNCTIONS
+        // =============================================
+        function migrateDates() {
+            if (state.lastReset.includes('T') && state.lastReset.endsWith('Z')) {
+                const utcDate = new Date(state.lastReset);
+                state.lastReset = getLocalTimeString(utcDate);
+            }
+            
+            state.history = state.history.map(week => {
+                if (week.startDate && week.startDate.includes('T') && week.startDate.endsWith('Z')) {
+                    const utcDate = new Date(week.startDate);
+                    week.startDate = getLocalTimeString(utcDate);
+                }
+                return week;
+            });
+            
+            saveState();
+        }
+
+        // =============================================
+        // HISTORY SECTION FUNCTIONS
+        // =============================================
+        function renderHistory() {
+            const container = document.getElementById('historyEntries');
+            const showNotes = state.historySettings.showNotes;
+            
+            const sortedHistory = [...state.history];
+            if (state.historySettings.sortOrder === 'newest') {
+                sortedHistory.reverse();
+            }
+            
+            container.innerHTML = sortedHistory.map((week, index) => {
+                const originalIndex = state.historySettings.sortOrder === 'newest' 
+                    ? state.history.length - 1 - index 
+                    : index;
+                const isCollapsed = state.historySettings.collapsedEntries[originalIndex] || false;
+                const formattedDate = formatDate(week.startDate);
+                const separator = state.historySettings.useHyphenSeparator ? ' - ' : ' (';
+                const endSeparator = state.historySettings.useHyphenSeparator ? '' : ')';
+                
+                return `
+                    <div class="history-entry">
+                        <div class="history-header" onclick="toggleHistoryEntry(${originalIndex})">
+                            <h3>Week ${originalIndex + 1}${separator}${formattedDate}${endSeparator}</h3>
+                            <div class="history-actions">
+                                <button onclick="event.stopPropagation();editNote(${originalIndex})">✏️</button>
+                                ${isCollapsed ? '▼' : '▲'}
+                            </div>
+                        </div>
+                        
+                        <div class="history-content" style="display: ${isCollapsed ? 'none' : 'block'}">
+                            ${week.note && showNotes ? `
+                                <div class="history-note">
+                                    <strong>Note:</strong> ${week.note}
+                                </div>
+                            ` : ''}
+                            
+                            ${Object.entries(week.activities).map(([activity, checked]) => `
+                                <div class="activity-status ${checked ? 'completed' : 'not-completed'}">
+                                    ${checked ? '✓' : '✗'} ${activity}
+                                </div>
+                            `).join('')}
+                            
+                            <div class="note-edit-container" id="noteEdit-${originalIndex}" style="display: none">
+                                <textarea class="note-edit" id="noteEditField-${originalIndex}">${week.note || ''}</textarea>
+                                <button onclick="saveNote(${originalIndex})">Save</button>
+                                <button onclick="cancelNoteEdit(${originalIndex})">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleHistoryEntry(index) {
+            state.historySettings.collapsedEntries[index] = 
+                !state.historySettings.collapsedEntries[index];
+            saveHistorySettings();
+            renderHistory();
+        }
+
+        function editNote(index) {
+            document.getElementById(`noteEdit-${index}`).style.display = 'block';
+        }
+
+        function saveNote(index) {
+            const newNote = document.getElementById(`noteEditField-${index}`).value.trim();
+            state.history[index].note = newNote || null;
+            saveState();
+            renderHistory();
+        }
+
+        function cancelNoteEdit(index) {
+            document.getElementById(`noteEdit-${index}`).style.display = 'none';
+        }
+
+        function saveHistorySettings() {
+            state.historySettings.sortOrder = document.getElementById('historySortOrder').value;
+            state.historySettings.showNotes = document.getElementById('showNotesToggle').checked;
+            state.historySettings.dateFormat = document.getElementById('dateFormat').value;
+            state.historySettings.useHyphenSeparator = document.getElementById('useHyphenSeparator').checked;
+            localStorage.setItem('historySettings', JSON.stringify(state.historySettings));
+            renderHistory();
+        }
+
+        function loadHistorySettings() {
+            document.getElementById('historySortOrder').value = state.historySettings.sortOrder;
+            document.getElementById('showNotesToggle').checked = state.historySettings.showNotes;
+            document.getElementById('dateFormat').value = state.historySettings.dateFormat;
+            document.getElementById('useHyphenSeparator').checked = state.historySettings.useHyphenSeparator;
+        }
+
+        // =============================================
+        // RESET LOGIC
+        // =============================================
+        function checkReset() {
+            const lastResetDate = dateFromLocalString(state.lastReset);
+            const now = new Date();
+            
+            const nextReset = new Date(lastResetDate);
+            nextReset.setDate(nextReset.getDate() + 7);
+            nextReset.setHours(state.settings.resetHour, 0, 0, 0);
+            
+            if (now >= nextReset) {
+                if (Object.keys(state.currentWeek).length > 0) {
+                    state.history.push({
+                        startDate: state.lastReset,
+                        activities: state.currentWeek,
+                        note: null
+                    });
+                }
+                
+                const newWeek = {};
+                Object.keys(state.currentWeek).forEach(activity => {
+                    newWeek[activity] = false;
+                });
+                state.currentWeek = newWeek;
+                
+                state.lastReset = getLocalTimeString(nextReset);
+                
+                saveState();
+                render();
+                
+                if (state.notificationSettings.enableWeekly && Notification.permission === 'granted') {
+                    showNotification(state.notificationSettings.weeklyNotificationText || 'A new week has started! Reflect on how taking the time to enjoy things has made you feel last week. What would you like to do this week?');
+                }
+            }
+        }
+
+        // =============================================
+        // MASTER LIST EDITOR FUNCTIONS
+        // =============================================
+        function loadMasterListEditor() {
+            const editor = document.getElementById('masterListEditor');
+            editor.value = state.masterList.join('\n');
+            state.editorState.masterListDraft = [...state.masterList];
+            localStorage.setItem('editorState', JSON.stringify(state.editorState));
+        }
+
+        function saveMasterList() {
+            const newContent = document.getElementById('masterListEditor').value;
+            const newList = newContent.split('\n')
+                .map(item => item.trim())
+                .filter(item => item.length > 0);
+            
+            if (newList.length === 0) {
+                if (!confirm('This will empty your activity list. Continue?')) return;
+            }
+            
+            state.masterList = [...new Set(newList)]; // Remove duplicates
+            state.editorState.masterListDraft = null;
+            saveState();
+            render();
+            alert('Activity list updated!');
+        }
+
+        function cancelMasterListEdit() {
+            if (state.editorState.masterListDraft) {
+                state.masterList = [...state.editorState.masterListDraft];
+            }
+            document.getElementById('masterListEditor').value = state.masterList.join('\n');
+        }
+
+        // =============================================
+        // SETTINGS MANAGEMENT
+        // =============================================
+        // Persistent settings selections
+        function initializeSettingsControls() {
+            document.getElementById('resetHour').value = state.settings.resetHour;
+            document.getElementById('historySortOrder').value = state.historySettings.sortOrder;
+            document.getElementById('showNotesToggle').checked = state.historySettings.showNotes;
+            document.getElementById('dateFormat').value = state.historySettings.dateFormat;
+            document.getElementById('useHyphenSeparator').checked = state.historySettings.useHyphenSeparator;
+            loadNotificationSettings();
+        }
+        
+        // Collapsible settings groups
+		function toggleSettingsGroup(groupName) {
+		    state.settingsMenuState[groupName] = !state.settingsMenuState[groupName];
+		    saveSettingsMenuState();
+		    renderSettingsMenu();
+		}
+		function renderSettingsMenu() {
+		    for (const [group, collapsed] of Object.entries(state.settingsMenuState)) {
+		        const header = document.querySelector(`h3[onclick="toggleSettingsGroup('${group}')"]`);
+		        const content = document.getElementById(`group-${group}`);
+		        
+		        if (header && content) {
+		            header.classList.toggle('collapsed', collapsed);
+		            content.classList.toggle('collapsed', collapsed);
+		        }
+		    }
+		}
+		function saveSettingsMenuState() {
+		    localStorage.setItem('settingsMenuState', JSON.stringify(state.settingsMenuState));
+		}
+		
+		// Settings menu toggle - Hamburger icon
+		function toggleSettings() {
+            const menu = document.getElementById('settingsMenu');
+            menu.style.left = menu.style.left === '-300px' ? '0' : '-300px';
+        }
+
+        // Save settings
+        function saveSettings() {
+            state.settings.resetHour = parseInt(document.getElementById('resetHour').value, 10);
+            localStorage.setItem('settings', JSON.stringify(state.settings));
+            checkReset();
+            alert('Settings saved!');
+        }
+        
+
+
+        // =============================================
+        // UI STATE MANAGEMENT
+        // =============================================
+        function toggleSection(sectionId) {
+		    const section = document.getElementById(sectionId);
+		    const header = section.previousElementSibling; // Get the header
+		    
+		    section.classList.toggle('visible');
+		    header.classList.toggle('visible'); // Add this line
+		    
+		    if(sectionId === 'history') {
+		        state.uiState.historyVisible = !state.uiState.historyVisible;
+		    }
+		    if(sectionId === 'dataExport') {
+		        state.uiState.dataExportVisible = !state.uiState.dataExportVisible;
+		    }
+		    saveState();
+		}
+
+        // =============================================
+        // DATA OPERATIONS
+        // =============================================
+        function addToMasterList() {
+            const input = document.getElementById('newActivity');
+            const activity = input.value.trim();
+            if (activity && !state.masterList.includes(activity)) {
+                state.masterList.push(activity);
+                input.value = '';
+                saveState();
+                render();
+            }
+        }
+
+        function addToChecklist(activity) {
+            if (!state.currentWeek.hasOwnProperty(activity)) {
+                state.currentWeek[activity] = false;
+                saveState();
+                render();
+            }
+        }
+
+        function removeFromChecklist(activity) {
+            delete state.currentWeek[activity];
+            saveState();
+            render();
+        }
+
+        function toggleCheck(activity) {
+            state.currentWeek[activity] = !state.currentWeek[activity];
+            saveState();
+            render();
+        }
+
+        function saveState() {
+            localStorage.setItem('masterList', JSON.stringify(state.masterList));
+            localStorage.setItem('currentWeek', JSON.stringify(state.currentWeek));
+            localStorage.setItem('history', JSON.stringify(state.history));
+            localStorage.setItem('lastReset', state.lastReset);
+            localStorage.setItem('uiState', JSON.stringify(state.uiState));
+            localStorage.setItem('settings', JSON.stringify(state.settings));
+            localStorage.setItem('settingsMenuState', JSON.stringify(state.settingsMenuState));
+            localStorage.setItem('editorState', JSON.stringify(state.editorState));
+            localStorage.setItem('historySettings', JSON.stringify(state.historySettings));
+            localStorage.setItem('notificationSettings', JSON.stringify(state.notificationSettings));
+        }
+
+        // =============================================
+        // RENDERING FUNCTIONS
+        // =============================================
+        
+        /**
+         * Renders the entire application UI
+         */
+        function render() {
+            // Check if weekly reset is needed
+            checkReset();
+            
+            // Initialise persistent settings selections
+            initializeSettingsControls();
+            
+            // initialise collapsible settings groups
+			renderSettingsMenu();
+            
+            // Restore collapsible UI states
+		    const historySection = document.getElementById('history');
+		    const historyHeader = historySection.previousElementSibling;
+		    historySection.classList.toggle('visible', state.uiState.historyVisible);
+		    historyHeader.classList.toggle('visible', state.uiState.historyVisible);
+		
+		    const dataExportSection = document.getElementById('dataExport');
+		    const dataExportHeader = dataExportSection.previousElementSibling;
+		    dataExportSection.classList.toggle('visible', state.uiState.dataExportVisible);
+		    dataExportHeader.classList.toggle('visible', state.uiState.dataExportVisible);
+
+            // Previous Restore collapsible UI states- idk if redundant?
+            // document.getElementById('history').classList.toggle('visible', state.uiState.historyVisible);
+            // document.getElementById('dataExport').classList.toggle('visible', state.uiState.dataExportVisible);
+
+            // Render Master List
+            const masterListDiv = document.getElementById('masterList');
+            masterListDiv.innerHTML = state.masterList.map(activity => `
+                <div class="activity">
+                    <span>${activity}</span>
+                    ${!state.currentWeek.hasOwnProperty(activity) ? 
+                        `<button onclick="addToChecklist('${activity}')"><span style='font-weight:bold;'><span style='color:#15FF0D;'>+</span></span></button>` : 
+                        `<button disabled><span style='font-weight:bold;'><span style='color:#13ED0C;'>+</span></span></button>`}
+                </div>
+            `).join('');
+
+            // Render Current Week
+            const currentWeekDiv = document.getElementById('currentWeek');
+            currentWeekDiv.innerHTML = Object.entries(state.currentWeek).map(([activity, checked]) => `
+                <div class="activity">
+                    <label>
+                        <input type="checkbox" ${checked ? 'checked' : ''} 
+                               onchange="toggleCheck('${activity}')">
+                        ${activity}
+                    </label>
+                    <button onclick="removeFromChecklist('${activity}')"><span style='font-weight:bold;'><span style='color:#ED0C0C;'>-</span></span></button>
+                </div>
+            `).join('');
+
+            // Render History
+            renderHistory();
+        }
+
+ 
+        // =============================================
+        // DATA IMPORT/EXPORT
+        // =============================================
+        
+        /**
+         * Exports application data to JSON
+         */
+        function exportData() {
+            const exportData = {
+                masterList: state.masterList,
+                currentWeek: state.currentWeek,
+                history: state.history,
+                lastReset: state.lastReset,
+                settings: state.settings,
+                settingsMenuState: state.settingsMenuState,
+                historySettings: state.historySettings,
+                notificationSettings: state.notificationSettings
+            };
+            
+            const exportString = JSON.stringify(exportData, null, 2);
+            document.getElementById('exportDataArea').value = exportString;
+            alert('Data copied to text area. Select and copy to save.');
+        }
+
+        /**
+         * Imports application data from JSON
+         */
+        function importData() {
+            const importString = document.getElementById('importDataArea').value;
+            if (!importString) return;
+
+            try {
+                const importedData = JSON.parse(importString);
+                
+                if (!confirm('This will overwrite current data. Continue?')) return;
+                
+                // Validate imported data structure
+                if (importedData.masterList && importedData.currentWeek && importedData.history && importedData.lastReset) {
+                    state.masterList = importedData.masterList;
+                    state.currentWeek = importedData.currentWeek;
+                    state.history = importedData.history;
+                    state.lastReset = importedData.lastReset;
+                    state.settings = importedData.settings || { resetHour: 0 };
+                    state.settingsMenuState = importedData.settingsMenuState || {
+		                resetTime: false,
+		                activityEditor: false,
+		                historySettings: false,
+		                notifications: false
+		            };
+                    state.historySettings = importedData.historySettings || {
+                        sortOrder: 'newest',
+                        showNotes: true,
+                        dateFormat: 'dd mmm, yyyy',
+                        useHyphenSeparator: false,
+                        collapsedEntries: {}
+                    };
+                    state.notificationSettings = importedData.notificationSettings || {
+                        enableDaily: true,
+                        enableWeekly: true,
+                        notificationHour: 9,
+                        dailyNotificationText: 'What nice things can you take the time to do today?',
+                        weeklyNotificationText: 'A new week has started! Reflect on how taking the time to enjoy things has made you feel last week. What would you like to do this week?',
+                        notificationPriority: 'both'
+                    };
+                    
+                    saveState();
+                    render();
+                    alert('Data imported successfully!');
+                    
+                    // Reschedule notifications if permission granted
+                    if (Notification.permission === 'granted') {
+                        scheduleNotifications();
+                    }
+                } else {
+                    throw new Error('Invalid data format');
+                }
+            } catch (e) {
+                alert('Error importing data: Invalid format');
+            }
+        } 
+ 
+
+        // =============================================
+        // INITIALISATION
+        // =============================================
+        
+        // Register service worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful');
+                    })
+                    .catch(err => {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+
+        // Initial render
+        render();
+        
+        // Schedule notifications if permission granted
+        if (Notification.permission === 'granted') {
+            scheduleNotifications();
+        }
+    </script>
+</body>
+</html>
