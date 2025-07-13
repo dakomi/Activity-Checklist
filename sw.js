@@ -1,6 +1,6 @@
 const CACHE_NAME = 'activity-checklist';
 const ASSETS_TO_CACHE = [
-  '/pleasant-activity-checklist.html',
+  '/index.html',
   '/manifest.json'
 ];
 
