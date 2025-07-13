@@ -1,8 +1,8 @@
 {
   "name": "Pleasant Activity Checklist",
-  "short_name": "Checklist",
+  "short_name": "Activity Checklist",
   "description": "Mindfully and intentionally enjoy things each week. Track your progress, and leave yourself notes of your reflections",
-  "start_url": "/pleasant-activity-checklist.html",
+  "start_url": "/index.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#4CAF50",
