@@ -1164,19 +1164,24 @@ Press 'Cancel' to load all activities into the textbox, and to reset unsaved cha
         // INITIALISATION
         // =============================================
         
-        // Register service worker
-        if (typeof navigator.serviceWorker !== 'undefined') {
-          navigator.serviceWorker.register('sw.js')
-        }
-
+// Register service worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/Activity-Checklist/sw.js', {
+    scope: '/Activity-Checklist/'
+  }).then(registration => {
+    console.log('Service Worker registered with scope:', registration.scope);
+    // Schedule notifications after registration
+    if (Notification.permission === 'granted') {
+      scheduleNotifications();
+    }
+  }).catch(error => {
+    console.log('Service Worker registration failed:', error);
+  });
+}
 
         // Initial render
         render();
-        
-        // Schedule notifications if permission granted
-        if (Notification.permission === 'granted') {
-            scheduleNotifications();
-        }
+
     </script>
 </body>
 </html>
