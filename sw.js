@@ -3,8 +3,8 @@ const CACHE_NAME = `activity-checklist-${CACHE_VERSION}`;
 const ASSETS_TO_CACHE = [
   '/Activity-Checklist/index.html',
   '/Activity-Checklist/manifest.json',
-  '/Activity-Checklist/icon-192.png',
-  '/Activity-Checklist/icon-512.png'
+  '/Activity-Checklist/icons/icon-192.png',
+  '/Activity-Checklist/icons/icon-512.png'
 ];
 
 self.addEventListener('install', (event) => {
@@ -42,7 +42,7 @@ self.addEventListener('push', (event) => {
   event.waitUntil(
     self.registration.showNotification(payload.title || 'Weekly Checklist', {
       body: payload.body || 'Check your weekly activities',
-      icon: '/Activity-Checklist/icon-192.png',
+      icon: '/Activity-Checklist/icons/icon-192.png',
       vibrate: [200, 100, 200]
     })
   );
