@@ -1,19 +1,22 @@
 {
   "name": "Pleasant Activity Checklist",
   "short_name": "Activity Checklist",
+  "id": "/Activity-Checklist/",
   "description": "Mindfully and intentionally enjoy things each week. Track your progress, and leave yourself notes of your reflections",
-  "start_url": "/index.html",
+  "start_url": "/Activity-Checklist/index.html",
+  "scope": "/Activity-Checklist/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#4CAF50",
+  "orientation": "portrait",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "/Activity-Checklist/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "icon-512.png",
+      "src": "/Activity-Checklist/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
